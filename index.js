@@ -1,0 +1,42 @@
+const express = require("express");
+const axios = require("axios");
+
+const app = express();
+
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello, World!");
+});
+
+app.get("/health", (req, res) => {
+  res.sendStatus(200);
+});
+
+app.get("/bye", (req, res) => {
+  res.send("Bye, World!");
+});
+
+app.get("/weather", async (req, res) => {
+  const url = "https://wttr.in";
+
+  try {
+    const response = await axios.get(url);
+    res.set("Content-Type", "text/html");
+    res.send(response.data);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+/*
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+*/
