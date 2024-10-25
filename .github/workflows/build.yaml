@@ -31,14 +31,6 @@ jobs:
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
-      - name: Cache Trivy DB
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/trivy
-          key: ${{ runner.os }}-trivy-db-${{ hashFiles('**/Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-trivy-db-
-
       - name: Scan with Trivy
         env:
           TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
@@ -90,9 +82,3 @@ jobs:
 
       - name: Push Docker Image to Docker Hub
         run: docker push izzmoqbel/devops_project:${{ github.sha }}
-
-      - name: Scan Docker Image with Trivy
-        env:
-          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
-        run: |
-          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project:${{ github.sha }}
