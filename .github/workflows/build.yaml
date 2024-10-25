@@ -15,6 +15,8 @@ jobs:
           TFSEC_VERSION=1.26.3
           GOSEC_VERSION=2.12.0
 
+
+
           # Install Trivy
           curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
           tar -xvf trivy.tar.gz
@@ -30,20 +32,11 @@ jobs:
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
-      - name: Cache Trivy DB
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/trivy
-          key: ${{ runner.os }}-trivy-db-${{ hashFiles('**/Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-trivy-db-
-
       - name: Scan with Trivy
         env:
-          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
+          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}  # Use the GitHub PAT
         run: |
-          # Update Trivy DB if it needs to be
-          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
 
       - name: Scan Code with GoSec
         run: |
@@ -54,11 +47,11 @@ jobs:
           tfsec -m HIGH
 
   build:
+    needs: [scan]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -66,6 +59,7 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
+
 
   docker-build:
     needs: [build]
@@ -86,9 +80,16 @@ jobs:
       - name: Push Docker Image to Docker Hub
         run: docker push izzmoqbel/devops_project:latest
 
+      - name: Install Trivy for Docker Image Scanning
+        run: |
+          TRIVY_VERSION=0.30.4
+          curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+          tar -xvf trivy.tar.gz
+          sudo mv trivy /usr/local/bin
+
       - name: Scan Docker Image with Trivy
         env:
           TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
         run: |
-          # Check if the Trivy database needs updating and scan the Docker image
-          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+
