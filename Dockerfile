@@ -9,19 +9,18 @@ COPY package*.json ./
 
 RUN npm install
 
+# Install dependencies using npm ci for reproducible builds
+RUN npm ci --only=production
+
+
 COPY . .
 
-
-# Change ownership of app files to the non-root user
-RUN chown -R appuser:appuser /app
-
-# Use the non-root user created
+# Switch to the non-root user
 USER appuser
 
 
 EXPOSE 3000
 
 CMD ["node", "index.js"]
-
 
 

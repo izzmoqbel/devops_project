@@ -31,11 +31,20 @@ jobs:
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
+      - name: Cache Trivy DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-db-
+
       - name: Scan with Trivy
         env:
           TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
         run: |
-          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+          # Run Trivy scan
+          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
 
       - name: Scan Code with GoSec
         run: gosec ./...
@@ -82,14 +91,8 @@ jobs:
       - name: Push Docker Image to Docker Hub
         run: docker push izzmoqbel/devops_project:${{ github.sha }}
 
-      - name: Install Trivy for Docker Image Scanning
-        run: |
-          curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${{ env.TRIVY_VERSION }}/trivy_${{ env.TRIVY_VERSION }}_Linux-64bit.tar.gz
-          tar -xvf trivy.tar.gz
-          sudo mv trivy /usr/local/bin
-
       - name: Scan Docker Image with Trivy
         env:
           TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
         run: |
-          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project:${{ github.sha }}
+          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project:${{ github.sha }}
