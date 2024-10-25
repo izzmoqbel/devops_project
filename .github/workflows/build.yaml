@@ -32,6 +32,14 @@ jobs:
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
+      - name: Cache Trivy DB
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-${{ hashFiles('**/Dockerfile') }} 
+          restore-keys: |
+            ${{ runner.os }}-trivy-
+
       - name: Scan with Trivy
         env:
           TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
@@ -92,6 +100,14 @@ jobs:
           curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
           tar -xvf trivy.tar.gz
           sudo mv trivy /usr/local/bin
+
+      - name: Cache Trivy DB for Docker Scan
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-docker-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-trivy-docker-
 
       - name: Scan Docker Image with Trivy
         env:
