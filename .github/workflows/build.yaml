@@ -15,6 +15,8 @@ jobs:
           TFSEC_VERSION=1.26.3
           GOSEC_VERSION=2.12.0
 
+
+
           # Install Trivy
           curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
           tar -xvf trivy.tar.gz
@@ -30,9 +32,11 @@ jobs:
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
-      - name: Scan Filesystem with Trivy
+      - name: Scan with Trivy
+        env:
+          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
         run: |
-          trivy fs --security-checks vuln,secret --exit-code 1 ./
+          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
 
       - name: Scan Code with GoSec
         run: |
