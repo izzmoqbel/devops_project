@@ -84,4 +84,8 @@ jobs:
           sudo mv trivy /usr/local/bin
 
       - name: Scan Docker Image with Trivy
-        run: trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+        env:
+          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
+        run: |
+          trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
+
