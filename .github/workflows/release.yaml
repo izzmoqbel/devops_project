@@ -1,6 +1,9 @@
 name: Release
 
-on: push
+on:
+  push:
+    tags:
+      - '**'  
 
 env:
   DOCKER_REPO: izzmoqbel/devops_project  

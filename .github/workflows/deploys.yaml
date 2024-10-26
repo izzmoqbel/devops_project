@@ -1,0 +1,28 @@
+name: Deploy
+
+on: push
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Terraform
+        env:
+          TF_VERSION: 1.9.8
+        run: |
+          curl -LO https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          sudo unzip -o terraform_${TF_VERSION}_linux_amd64.zip -d /usr/local/bin
+          
+      - name: Deploy Infrastructure with Terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+          DOCKER_IMAGE: izzmoqbel/devops_project:${{ github.sha }} 
+        run: |
+          cd terraform
+          terraform init -backend-config=key=${GITHUB_SHA}
+          terraform apply -auto-approve -var environment=${GITHUB_SHA} -var image=$DOCKER_IMAGE
