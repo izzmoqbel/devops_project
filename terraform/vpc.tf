@@ -6,7 +6,7 @@ data "aws_subnets" "deployment_subnets" {
 }
 
 resource "aws_security_group" "backend_sg" {
-  name   = "terraform-security-group"
+ name   = "${var.environment}-backend-sg"
   vpc_id = var.vpc_id
 
   ingress {
