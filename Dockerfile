@@ -1,7 +1,7 @@
-FROM node:23 AS builder
+FROM node:22 AS builder
 
 # Create a non-root user
-RUN useradd -m appuser
+# RUN useradd -m appuser
 
 WORKDIR /app
 
@@ -12,25 +12,32 @@ RUN npm install
 COPY . .
 
 # Switch to the non-root user
-USER appuser
-
-
-EXPOSE 3000
-
-CMD ["node", "index.js"]
+# USER appuser
 
 
 
-FROM node:23-alpine
+FROM gcr.io/distroless/nodejs22-debian12
 
-RUN useradd -m appuser
 
-WORKDIR /app
+USER nonroot
 
+
+COPY --from=builder --chown=nonroot:nonroot /app/index.js /
+COPY --from=builder --chown=nonroot:nonroot /app /app
 COPY --from=builder /app .
 
-USER appuser
+# Set the user to run the application
+USER nonroot
+
+# Set the working directory for the application
+WORKDIR /app
 
 EXPOSE 3000
 
 CMD ["node", "index.js"]
+
+
+
+
+
+
