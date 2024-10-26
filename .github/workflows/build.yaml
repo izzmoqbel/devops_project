@@ -3,7 +3,7 @@ name: Node.js CI/CD Pipeline
 on: push
 
 env:
-  TRIVY_VERSION: 0.30.4
+  TRIVY_VERSION: 0.56.2
   TFSEC_VERSION: 1.26.3
 
 jobs:
