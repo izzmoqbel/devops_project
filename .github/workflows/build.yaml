@@ -5,7 +5,6 @@ on: push
 env:
   TRIVY_VERSION: 0.30.4
   TFSEC_VERSION: 1.26.3
-  GOSEC_VERSION: 2.12.0
 
 jobs:
   scan:
@@ -21,11 +20,6 @@ jobs:
           tar -xvf trivy.tar.gz
           sudo mv trivy /usr/local/bin
 
-          # Install GoSec
-          curl -o gosec.tar.gz -L https://github.com/securego/gosec/releases/download/v${{ env.GOSEC_VERSION }}/gosec_${{ env.GOSEC_VERSION }}_linux_amd64.tar.gz
-          tar xvf gosec.tar.gz
-          sudo mv gosec /usr/local/bin
-
           # Install TFSec
           curl -o tfsec -L https://github.com/aquasecurity/tfsec/releases/download/v${{ env.TFSEC_VERSION }}/tfsec-linux-amd64
           chmod +x tfsec
@@ -37,9 +31,6 @@ jobs:
         run: |
           # Run Trivy scan
           trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project
-
-      - name: Scan Code with GoSec
-        run: gosec ./...
 
       - name: Scan Terraform with TFSec
         run: tfsec -m HIGH
@@ -53,7 +44,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '23-alpine.19'
+          node-version: '23'
 
       - name: Cache Node.js modules
         uses: actions/cache@v3
