@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:23-alpine.19
 
 # Create a non-root user
 RUN useradd -m appuser
