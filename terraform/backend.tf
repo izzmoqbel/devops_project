@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "devops-course-tf-state"
+    bucket = "devops-project"
     region = "eu-central-1"
   }
 }
