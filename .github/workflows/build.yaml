@@ -15,13 +15,22 @@ jobs:
 
       - name: Install Security Tools
         run: |
+          # Install Trivy
+          curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${{ env.TRIVY_VERSION }}/trivy_${{ env.TRIVY_VERSION }}_Linux-64bit.tar.gz
+          tar -xvf trivy.tar.gz
+          sudo mv trivy /usr/local/bin
 
           # Install TFSec
           curl -o tfsec -L https://github.com/aquasecurity/tfsec/releases/download/v${{ env.TFSEC_VERSION }}/tfsec-linux-amd64
           chmod +x tfsec
           sudo mv tfsec /usr/local/bin
 
-      
+      - name: Scan with Trivy
+        env:
+          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
+        run: |
+          # Run Trivy scan and allow pipeline to continue on errors
+          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project || true
 
       - name: Scan Terraform with TFSec
         run: tfsec -m HIGH
