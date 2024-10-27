@@ -1,0 +1,39 @@
+name: Deploy
+
+on: push
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Terraform
+        env:
+          TF_VERSION: 1.2.5
+        run: |
+        
+          curl -LO https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          sudo unzip -o terraform_${TF_VERSION}_linux_amd64.zip -d /usr/local/bin
+      
+      - name: Set Up Environment Variables
+        id: setup_vars
+        run: |
+          # Get the current branch name
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+
+
+      - name: Deploy Infrastructure with Terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+          DOCKER_IMAGE: izzmoqbel/devops_project:${{ env.BRANCH_NAME }} 
+        run: |
+          cd terraform
+          terraform init -backend-config=key=${{ env.BRANCH_NAME }}
+          terraform apply -auto-approve -var environment=${{ env.BRANCH_NAME }} -var image=$DOCKER_IMAGE
+
+
