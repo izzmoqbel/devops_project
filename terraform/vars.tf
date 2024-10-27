@@ -11,5 +11,5 @@ variable "image" {
 variable "vpc_id" {
   type        = string
   description = "Deployment VPC ID"
-  default     = "vpc-01f27cd4f52b1a990" 
+  default     = "vpc-01d6a0f32512b0b6d" 
 }
