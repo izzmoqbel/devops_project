@@ -56,7 +56,8 @@ resource "aws_iam_role" "task_role" {
     name = "ecr_pull"
     policy = jsonencode({
       Version = "2012-10-17",
-      Statement = [
+      Statement = [ 
+      
         {
           Effect = "Allow",
           Action = [
