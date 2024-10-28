@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "cluster_logs" {
 }
 
 resource "aws_ecs_cluster" "main_cluster" {
-  name = "ecs-cluster-${var.environment}"
+  name = "ecs-cluster-${replace(var.environment, ".", "-")}"
 
   setting {
     name  = "containerInsights"
