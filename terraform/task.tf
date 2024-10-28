@@ -3,26 +3,33 @@ resource "aws_ecs_task_definition" "service" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = 256
   memory                   = 512
-  container_definitions = jsonencode([
-    {
-      name      = "our_backend"
-      image     = var.image
-      cpu       = 256
-      memory    = 512
-      essential = true
-      portMappings = [
-        {
-          containerPort = 3000
-          hostPort      = 3000
-        }
-      ]
-    }
-  ])
+  network_mode             = "awsvpc"
 
-  execution_role_arn = aws_iam_role.task_role.arn
-  network_mode       = "awsvpc"
+  container_definitions = jsonencode([{
+    name      = "our_backend"
+    image     = var.image
+    cpu       = 256
+    memory    = 512
+    essential = true
+    portMappings = [{
+      containerPort = 3000
+      protocol      = "tcp"
+    }]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/our_backend"
+        "awslogs-region"        = "eu-central-1"
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+
+  execution_role_arn = aws_iam_role.task_execution_role.arn
+  task_role_arn      = aws_iam_role.task_role.arn
 }
 
+# ECS Service
 resource "aws_ecs_service" "our_backend" {
   name            = "our_backend"
   launch_type     = "FARGATE"
@@ -37,28 +44,28 @@ resource "aws_ecs_service" "our_backend" {
   }
 }
 
-resource "aws_iam_role" "task_role" {
+# IAM Role for Task Execution (Pulling from ECR, CloudWatch Logs)
+resource "aws_iam_role" "task_execution_role" {
+  name = "ecs_task_execution_role"
+  
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
+        Effect    = "Allow"
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
+        Action    = "sts:AssumeRole"
       },
     ]
   })
 
   inline_policy {
-    name = "ecr_pull"
+    name = "task_execution_policy"
     policy = jsonencode({
-      Version = "2012-10-17",
-      Statement = [ 
+      Version = "2012-10-17"
+      Statement = [
         {
-          Effect = "Allow",
+          Effect = "Allow"
           Action = [
             "ecr:GetAuthorizationToken",
             "ecr:BatchCheckLayerAvailability",
@@ -66,7 +73,7 @@ resource "aws_iam_role" "task_role" {
             "ecr:BatchGetImage",
             "logs:CreateLogStream",
             "logs:PutLogEvents"
-          ],
+          ]
           Resource = "*"
         }
       ]
