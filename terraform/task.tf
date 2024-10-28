@@ -13,7 +13,7 @@ resource "aws_ecs_task_definition" "service" {
     essential = true
     portMappings = [{
       containerPort = 3000
-      protocol      = "tcp"
+      hostPort      = 3000
     }]
     logConfiguration = {
       logDriver = "awslogs"
@@ -25,11 +25,9 @@ resource "aws_ecs_task_definition" "service" {
     }
   }])
 
-  execution_role_arn = aws_iam_role.task_execution_role.arn
-  task_role_arn      = aws_iam_role.task_role.arn
+  execution_role_arn = aws_iam_role.task_role.arn
 }
 
-# ECS Service
 resource "aws_ecs_service" "our_backend" {
   name            = "our_backend"
   launch_type     = "FARGATE"
@@ -44,28 +42,28 @@ resource "aws_ecs_service" "our_backend" {
   }
 }
 
-# IAM Role for Task Execution (Pulling from ECR, CloudWatch Logs)
-resource "aws_iam_role" "task_execution_role" {
-  name = "ecs_task_execution_role"
-  
+resource "aws_iam_role" "task_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect    = "Allow"
-        Principal = { Service = "ecs-tasks.amazonaws.com" }
-        Action    = "sts:AssumeRole"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
       },
     ]
   })
 
   inline_policy {
-    name = "task_execution_policy"
+    name = "ecr_pull"
     policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
+      Version = "2012-10-17",
+      Statement = [ 
         {
-          Effect = "Allow"
+          Effect = "Allow",
           Action = [
             "ecr:GetAuthorizationToken",
             "ecr:BatchCheckLayerAvailability",
@@ -73,7 +71,7 @@ resource "aws_iam_role" "task_execution_role" {
             "ecr:BatchGetImage",
             "logs:CreateLogStream",
             "logs:PutLogEvents"
-          ]
+          ],
           Resource = "*"
         }
       ]
