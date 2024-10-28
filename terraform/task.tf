@@ -18,7 +18,7 @@ resource "aws_ecs_task_definition" "service" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = "/ecs/our_backend"
+        "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name
         "awslogs-region"        = "eu-central-1"
         "awslogs-stream-prefix" = "ecs"
       }
