@@ -17,4 +17,4 @@ USER nonroot
 
 EXPOSE 3000
 
-CMD ["node", "/app/index.js"]
+CMD ["node", "index.js"]
