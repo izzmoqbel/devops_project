@@ -11,7 +11,7 @@ FROM gcr.io/distroless/nodejs22-debian12
 
 WORKDIR /app
 
-COPY --from=builder --chown=nonroot:nonroot /app /app
+COPY --from=builder --chown=nonroot:nonroot /app/index.js ./
 
 USER nonroot
 
