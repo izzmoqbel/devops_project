@@ -37,8 +37,5 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}  
-          name: Release ${{ github.ref }}  
-          body_path: release  
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}  
+          token: ${{ secrets.GHCR_PAT }} 
+          body_path: release
