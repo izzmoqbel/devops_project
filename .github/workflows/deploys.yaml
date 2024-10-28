@@ -25,8 +25,8 @@ jobs:
         id: setup_vars
         run: |
           # Get the current branch name
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          TAG_NAME=${GITHUB_REF##*/}
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
 
 
       - name: Deploy Infrastructure with Terraform
@@ -34,10 +34,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: eu-central-1
-          DOCKER_IMAGE: izzmoqbel/devops_project:${{ env.BRANCH_NAME }} 
+          DOCKER_IMAGE: izzmoqbel/devops_project:${{ env.TAG_NAME }} 
         run: |
           cd terraform
-          terraform init -backend-config=key=${{ env.BRANCH_NAME }}
-          terraform apply -auto-approve -var environment=${{ env.BRANCH_NAME }} -var image=$DOCKER_IMAGE
+          terraform init -backend-config=key=${{ env.TAG_NAME }}
+          terraform apply -auto-approve -var environment=${{ env.TAG_NAME }} -var image=$DOCKER_IMAGE
 
 
