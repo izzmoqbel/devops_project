@@ -3,29 +3,24 @@ resource "aws_ecs_task_definition" "service" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = 256
   memory                   = 512
-  network_mode             = "awsvpc"
-
-  container_definitions = jsonencode([{
-    name      = "our_backend"
-    image     = var.image
-    cpu       = 256
-    memory    = 512
-    essential = true
-    portMappings = [{
-      containerPort = 3000
-      hostPort      = 3000
-    }]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name
-        "awslogs-region"        = "eu-central-1"
-        "awslogs-stream-prefix" = "ecs"
-      }
+  container_definitions = jsonencode([
+    {
+      name      = "our_backend"
+      image     = var.image
+      cpu       = 256
+      memory    = 512
+      essential = true
+      portMappings = [
+        {
+          containerPort = 3000
+          hostPort      = 3000
+        }
+      ]
     }
-  }])
+  ])
 
   execution_role_arn = aws_iam_role.task_role.arn
+  network_mode       = "awsvpc"
 }
 
 resource "aws_ecs_service" "our_backend" {
