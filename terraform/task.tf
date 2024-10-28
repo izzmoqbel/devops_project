@@ -79,6 +79,6 @@ resource "aws_iam_role" "task_role" {
 }
 
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
-  name              = "/ecs/our_backend"
+  name              = "/ecs/our_backend-${var.environment}"
   retention_in_days = 1  
 }
