@@ -1,0 +1,83 @@
+name: Node.js CI/CD Pipeline
+
+on: push
+
+env:
+  DOCKER_REPO: izzmoqbel/devops_project
+  TRIVY_VERSION: 0.56.2
+  TFSEC_VERSION: 1.26.3
+
+jobs:
+  scan:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Security Tools
+        run: |
+          # Install Trivy
+          curl -o trivy.tar.gz -L https://github.com/aquasecurity/trivy/releases/download/v${{ env.TRIVY_VERSION }}/trivy_${{ env.TRIVY_VERSION }}_Linux-64bit.tar.gz
+          tar -xvf trivy.tar.gz
+          sudo mv trivy /usr/local/bin
+
+          # Install TFSec
+          curl -o tfsec -L https://github.com/aquasecurity/tfsec/releases/download/v${{ env.TFSEC_VERSION }}/tfsec-linux-amd64
+          chmod +x tfsec
+          sudo mv tfsec /usr/local/bin
+
+      - name: Scan with Trivy
+        env:
+          TRIVY_AUTH_TOKEN: ${{ secrets.GHCR_PAT }}
+        run: |
+          # Run Trivy scan and allow pipeline to continue on errors
+          trivy --quiet --cache-dir ~/.cache/trivy image --security-checks vuln,config,secret -s HIGH,CRITICAL --exit-code 1 izzmoqbel/devops_project || true
+
+      - name: Scan Terraform with TFSec
+        run: tfsec -m HIGH || true
+
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Dependencies
+        run: npm install
+
+  docker-build:
+    needs: [build]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          version=${GITHUB_REF##*/}
+          docker build -t $DOCKER_REPO:$version .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image to Docker Hub
+        run: |
+          version=${GITHUB_REF##*/}
+          docker push $DOCKER_REPO:$version
+          echo "\`docker run -p 3000:3000 $DOCKER_REPO:$version\`" > release
+
+
